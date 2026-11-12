@@ -1,0 +1,109 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+
+model Dispositivo {
+  id                  String   @id @default(cuid())
+  codigo              String   @unique
+  nome                String
+  tipo                String   // ESP32, RASPBERRY_PI
+  status              String   @default("OFFLINE")
+  ultimaComunicacao   DateTime?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  classificacoes      Classificacao[]
+  leituras            LeituraLixeira[]
+
+  @@map("dispositivos")
+}
+
+model Lixeira {
+  id                  String   @id @default(cuid())
+  codigo              String   @unique
+  nome                String
+  tipo                String   // ORGANICO, RECICLAVEL
+
+  limiteQuaseCheia    Float    @default(80)
+  limiteCheia         Float    @default(90)
+
+  ativa               Boolean  @default(true)
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  leituras            LeituraLixeira[]
+  classificacoes      Classificacao[]
+
+  @@index([tipo])
+  @@map("lixeiras")
+}
+
+model Classificacao {
+  id                  String   @id @default(cuid())
+  objetoId            String?  @unique
+
+  classe              String   // ORGANICO, RECICLAVEL
+  origem              String   // IA, SENSORES
+  confianca           Float?
+
+  timestamp           DateTime
+  recebidoEm          DateTime @default(now())
+
+  dispositivoId       String?
+  dispositivo         Dispositivo? @relation(fields: [dispositivoId], references: [id])
+
+  lixeiraId           String?
+  lixeira             Lixeira? @relation(fields: [lixeiraId], references: [id])
+
+  imagem              Imagem?
+
+  @@index([timestamp])
+  @@index([classe, timestamp])
+  @@map("classificacoes")
+}
+
+model LeituraLixeira {
+  id                  String   @id @default(cuid())
+
+  nivelPercentual     Float
+  pesoGramas          Float?
+
+  timestamp           DateTime
+  recebidoEm          DateTime @default(now())
+
+  lixeiraId           String
+  lixeira             Lixeira @relation(fields: [lixeiraId], references: [id])
+
+  dispositivoId       String?
+  dispositivo         Dispositivo? @relation(fields: [dispositivoId], references: [id])
+
+  @@index([lixeiraId, timestamp])
+  @@index([timestamp])
+  @@map("leituras_lixeira")
+}
+
+model Imagem {
+  id                  String   @id @default(cuid())
+  caminho             String
+  mimeType            String?
+  tamanhoBytes        Int?
+
+  createdAt           DateTime @default(now())
+
+  classificacaoId     String   @unique
+  classificacao       Classificacao @relation(fields: [classificacaoId], references: [id], onDelete: Cascade)
+
+  @@map("imagens")
+}
+

@@ -12,7 +12,11 @@ yarn dev
 pnpm dev
 # or
 bun dev
+
 ```
+dev dependencies 
+npm install prisma -D
+
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
