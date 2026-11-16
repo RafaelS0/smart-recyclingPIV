@@ -19,19 +19,25 @@ export default function Historico() {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
 
-  const load = useCallback(async (p: number) => {
+  const load = useCallback(async (p: number, signal: AbortSignal) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/historico?page=${p}&limit=${PER_PAGE}`);
+      const res = await fetch(`/api/historico?page=${p}&limit=${PER_PAGE}`, { signal });
       const data = await res.json();
       setItems(data.items ?? []);
       setTotal(data.total ?? 0);
+    } catch (e) {
+      if ((e as Error).name !== "AbortError") throw e;
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => { load(page); }, [page, load]);
+  useEffect(() => {
+    const controller = new AbortController();
+    load(page, controller.signal);
+    return () => controller.abort();
+  }, [page, load]);
 
   const totalPages = Math.max(1, Math.ceil(total / PER_PAGE));
   const fmt = (s: string) => new Date(s).toLocaleString("pt-BR", { hour12: false });
