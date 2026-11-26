@@ -1,0 +1,1 @@
+Smart Recycling durable queue. Initialize this filesystem only on a new/empty ESP32; uploadfs erases queued events.

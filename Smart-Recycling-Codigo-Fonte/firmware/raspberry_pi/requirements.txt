@@ -1,0 +1,4 @@
+# Raspberry Pi OS: use apt packages for architecture-compatible NumPy/OpenCV/Pillow.
+pyserial==3.5
+# Install a TFLite runtime compatible with the Pi OS/Python architecture separately.
+# model.py accepts tflite_runtime, ai_edge_litert or tensorflow.

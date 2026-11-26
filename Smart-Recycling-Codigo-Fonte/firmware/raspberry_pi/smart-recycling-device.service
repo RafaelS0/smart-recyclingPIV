@@ -1,0 +1,23 @@
+[Unit]
+Description=Smart Recycling camera inference and serial bridge
+After=network-online.target
+Wants=network-online.target
+[Service]
+Type=simple
+User=smart-recycling
+Group=smart-recycling
+SupplementaryGroups=dialout video
+WorkingDirectory=/opt/smart-recycling-device
+EnvironmentFile=/etc/smart-recycling-device.env
+ExecStart=/opt/smart-recycling-device/.venv/bin/python /opt/smart-recycling-device/main.py
+Restart=on-failure
+RestartSec=5
+StateDirectory=smart-recycling
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+ReadWritePaths=/var/lib/smart-recycling
+[Install]
+WantedBy=multi-user.target

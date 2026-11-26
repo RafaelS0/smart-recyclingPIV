@@ -1,0 +1,8 @@
+Training adaptation based on techSash/Waste-classification, commit 68339005d1d5f6e769c0ed15f58a9b7cd366edc7.
+Original repository: https://github.com/techSash/Waste-classification
+Original work: techSash, in collaboration with Dhruv Hariharan. Apache-2.0 license in LICENSE.upstream.
+Modified: modern TensorFlow/Keras APIs, training/validation separation, model export, metadata and runtime adapter.
+Dataset attribution: https://www.kaggle.com/datasets/techsash/waste-classification-data ; download and review terms separately.
+Arduino pin definitions/calibration references based on the user's project:
+https://github.com/RafaelS0/smart-recyclingPIV at commit 4a12454a6a9c4b7710326f13c7dd3ec7c1ca5fdb.
+No dataset, third-party trained weights, camera captures or reported accuracy is bundled or fabricated.

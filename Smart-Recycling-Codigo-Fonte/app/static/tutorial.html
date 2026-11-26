@@ -1,0 +1,118 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tutorial da API · Smart Recycling</title><link rel="stylesheet" href="./static/style.css"></head><body><div class="layout"><aside><div class="logo"><span class="logo-mark">♻</span><span>Smart<br>Recycling</span></div><div class="sub">CENTRAL DE MONITORAMENTO</div><nav aria-label="Navegação principal"><a href="./"><span>▦</span> Voltar ao painel</a><a class="active" href="./tutorial"><span>⌘</span> Tutorial da API</a><a href="./docs"><span>↗</span> Referência interativa</a></nav><div class="sidebar-bottom">Arduino → ESP32 → API<br>Dados reais, do sensor ao painel.</div></aside><main class="guide-main"><div class="mobile-brand logo"><span class="logo-mark">♻</span>Smart Recycling</div><header class="top"><div><div class="eyebrow">Guia de integração</div><h1>Do dispositivo ao painel.</h1><p>Aprenda a enviar e consultar os dados da sua operação.</p></div><div class="top-actions"><a class="ghost" href="./">← Painel</a><a class="ghost" href="./docs">Referência da API ↗</a></div></header><p class="guide-intro">Este guia descreve a API que está disponível nesta versão do Smart Recycling. Comece verificando a conexão, configure a chave do dispositivo e só então envie medições reais.</p><div class="guide-callout"><strong>Endereço base</strong><br><code class="guide-url">https://mrvbot.com/smart_recycling</code><br>Use HTTPS em todas as requisições. O modo acadêmico aceita JSON simples em <code>/api/eventos</code>, <code>/api/lixeiras</code> e <code>/api/dispositivos</code>.</div><article class="panel integration-guide" id="api-academica"><h2>API acadêmica</h2><p>Os três POSTs usam HTTPS e o cabeçalho <code>Content-Type: application/json</code>. As consultas, o painel e a documentação interativa usam o login atual.</p>
+<p>Base <code>https://mrvbot.com/smart_recycling</code>. Use timestamps ISO 8601 em UTC, como os exemplos. Troque o horário pelo instante medido pelo equipamento.</p>
+<h2>Classificar um item</h2>
+<p>Envie para <code>POST /api/eventos</code> uma vez por item. Reuse o mesmo <code>event_id</code> e corpo se precisar reenviar após uma falha.</p>
+<div class="guide-code"><button class="ghost copy-code" type="button">Copiar</button><pre><code class="language-json">{
+  &quot;event_id&quot;: &quot;daijwdji12jid1&quot;,
+  &quot;timestamp&quot;: &quot;2026-11-22T19:24:14Z&quot;,
+  &quot;material&quot;: &quot;organico&quot;,
+  &quot;metal&quot;: 0,
+  &quot;ir&quot;: 1,
+  &quot;color&quot;: [255, 255, 255],
+  &quot;rasp_material&quot;: &quot;organico&quot;,
+  &quot;rasp_acuracia&quot;: 0.93,
+  &quot;acuracia_final&quot;: 0.95
+}
+</code></pre></div>
+<p><code>material</code> aceita <code>organico</code>, <code>reciclavel</code> ou <code>indefinido</code>. Os sensores digitais aceitam 0 ou 1. A cor segue RGB na faixa de 0 a 255. Os campos opcionais podem usar <code>null</code> quando faltarem leituras. As duas pontuações vão de 0 a 1.</p>
+<h2>Atualizar as lixeiras</h2>
+<p>Envie para <code>POST /api/lixeiras</code> a cada 60 segundos pelo ESP32 usando as medições do Arduino.</p>
+<div class="guide-code"><button class="ghost copy-code" type="button">Copiar</button><pre><code class="language-json">{
+  &quot;timestamp&quot;: &quot;2026-11-22T19:24:14Z&quot;,
+  &quot;reciclaveis_cm&quot;: null,
+  &quot;organicos_cm&quot;: 30.1
+}
+</code></pre></div>
+<p>Quanto menor a distância do sensor até o resíduo, mais cheia está a lixeira. O painel mostra os centímetros disponíveis. Para exibir percentual e alertas por ocupação, calibre as distâncias de vazio e cheio e envie o percentual pelo protocolo v1. A leitura acadêmica passa a aparecer como desatualizada após 150 segundos.</p>
+<h2>Informar o estado dos componentes</h2>
+<p>Envie para <code>POST /api/dispositivos</code> com os seis campos de estado.</p>
+<div class="guide-code"><button class="ghost copy-code" type="button">Copiar</button><pre><code class="language-json">{
+  &quot;timestamp&quot;: &quot;2026-11-22T19:24:14Z&quot;,
+  &quot;sensor_indutivo&quot;: true,
+  &quot;sensor_cor&quot;: true,
+  &quot;sensor_ir&quot;: true,
+  &quot;raspberry&quot;: true,
+  &quot;servo_topo&quot;: true,
+  &quot;servo_calha&quot;: true
+}
+</code></pre></div>
+<p>Use <code>true</code> para operante, <code>false</code> para indisponível ou <code>null</code> quando não há confirmação. O firmware confirma o sensor de cor pelos pulsos recebidos e o Raspberry pela resposta serial. O indutivo, o IR e os servos permanecem sem confirmação de funcionamento na ausência de diagnóstico elétrico dedicado. A classificação ainda pode carregar a leitura digital de IR e metal.</p>
+<h2>Enviar pelo terminal</h2>
+<p>Salve o corpo em um arquivo JSON e envie à rota correspondente. No Windows, use <code>curl.exe</code>.</p>
+<div class="guide-code"><button class="ghost copy-code" type="button">Copiar</button><pre><code class="language-sh">curl -sS -H &quot;Content-Type: application/json&quot; --data-binary @evento.json https://mrvbot.com/smart_recycling/api/eventos
+</code></pre></div>
+<ul>
+<li>HTTP 201 confirma a gravação. HTTP 200 indica reenvio idêntico.</li>
+<li>HTTP 409 indica que um ID já registrado foi reutilizado com outro conteúdo.</li>
+<li>HTTP 422 indica divergência nos campos ou valores do JSON.</li>
+<li>Os três POSTs acadêmicos são públicos e podem alterar o painel. Use o ambiente local para amostras de teste.</li>
+<li>As consultas <code>GET /api/eventos</code>, <code>GET /api/lixeiras</code> e <code>GET /api/dispositivos</code> exigem sessão. O protocolo versionado <code>/api/v1/events</code> e os envelopes antigos continuam usando <code>X-Device-Key</code>.</li>
+</ul></article><p class="muted">Os passos abaixo cobrem o login de consulta e o protocolo de telemetria com chave.</p><nav class="guide-toc" aria-label="Etapas do tutorial"><a href="#conexao">1. Conexão</a><a href="#acesso">2. Autenticação</a><a href="#telemetria">3. Enviar dados</a><a href="#campos">4. Campos</a><a href="#consultas">5. Consultar</a><a href="#esp32">6. ESP32</a><a href="#erros">7. Erros</a></nav><div class="guide-sections">
+<section class="panel" id="conexao"><div class="eyebrow">Passo 1</div><h2>Verifique se a API está disponível</h2><p>Esta consulta é pública e não grava dados. No Windows, use <code>curl.exe</code> no lugar de <code>curl</code>.</p><div class="guide-code"><button class="ghost copy-code" type="button">Copiar</button><pre><code>curl https://mrvbot.com/smart_recycling/api/health</code></pre></div><p>Resposta esperada: <code>{"ok":true,"simulation_mode":false}</code>. Isso indica que a API responde e que a simulação está desativada; não comprova que o hardware está conectado.</p><button class="btn" id="check-health" type="button">Verificar conexão agora</button><div class="health-result" id="health-result" role="status" aria-live="polite"></div></section>
+<section class="panel" id="acesso"><div class="eyebrow">Passo 2</div><h2>Escolha a credencial correta</h2><div class="guide-table-wrap"><table class="guide-table"><thead><tr><th>Quem acessa</th><th>Autenticação</th><th>Uso</th></tr></thead><tbody><tr><td>Pessoa ou script de consulta</td><td>Usuário e senha → cookie de sessão</td><td>Painel, resumo, histórico, documentação e WebSocket.</td></tr><tr><td>ESP32 ou equipamento</td><td>Cabeçalho <code>X-Device-Key</code></td><td>Envio de telemetria. Não usa a senha do painel.</td></tr></tbody></table></div><h3>Login para consultas por terminal</h3><p>Crie um arquivo local <code>login.json</code> com seu usuário e senha. Não compartilhe esse arquivo. O exemplo abaixo usa marcadores: substitua-os pelas suas credenciais.</p><div class="guide-code"><button class="ghost copy-code" type="button">Copiar</button><pre><code>{
+  "username": "SEU_USUARIO",
+  "password": "SUA_SENHA"
+}</code></pre></div><div class="guide-code"><button class="ghost copy-code" type="button">Copiar</button><pre><code>curl -c cookies.txt -H "Content-Type: application/json" --data-binary @login.json https://mrvbot.com/smart_recycling/api/auth/login</code></pre></div><p>A resposta é <code>{"ok":true}</code>. O arquivo <code>cookies.txt</code> guarda a sessão e deve ser tratado como uma credencial. A sessão dura até 8 horas; ao expirar, faça login novamente. Apague o arquivo local de senha após o uso. No Postman, envie o mesmo JSON em <strong>Body → raw → JSON</strong>; mantenha os cookies habilitados.</p><h3>Como obter a chave do dispositivo</h3><p>O responsável pela VPS encontra <code>DEVICE_KEY</code> no arquivo <code>/opt/smart-recycling/.env</code>, acessível por SSH. Peça essa chave ao administrador e configure-a no equipamento. Ela não é exibida neste tutorial nem enviada ao navegador. Nesta versão, a chave é compartilhada pelos dispositivos autorizados; <code>device_id</code> identifica a origem declarada, mas não é uma senha.</p></section>
+<section class="panel" id="telemetria"><div class="eyebrow">Passo 3</div><h2>Envie uma medição real</h2><p>Endpoint: <code>POST /api/telemetry</code>. Cabeçalhos: <code>Content-Type: application/json</code> e <code>X-Device-Key: SUA_CHAVE</code>.</p><div class="guide-callout caution"><strong>Este exemplo é ilustrativo.</strong> Não envie os números abaixo para a produção. Substitua-os por leituras reais. Cada POST aceito grava uma linha e altera os totais do painel. Para testes sintéticos, use um ambiente local isolado.</div><p>Salve o JSON como <code>telemetria.json</code>. Use <code>null</code> para medições opcionais desconhecidas. Os campos <code>metal</code> e <code>conveyor_running</code> devem refletir os estados realmente informados pelo controlador.</p><div class="guide-code"><button class="ghost copy-code" type="button">Copiar</button><pre><code>{
+  "device_id": "esp32-01",
+  "simulated": false,
+  "material": "reciclavel",
+  "confidence": null,
+  "metal": true,
+  "infrared": 550,
+  "color_r": 120,
+  "color_g": 80,
+  "color_b": 45,
+  "distance_cm": 9.4,
+  "organic_fill_pct": null,
+  "recyclable_fill_pct": null,
+  "organic_weight_g": null,
+  "recyclable_weight_g": null,
+  "conveyor_running": false,
+  "servo_position_deg": null
+}</code></pre></div><h3>Windows PowerShell</h3><p>O terminal solicita a chave sem mostrá-la enquanto você digita. Use o JSON já preenchido com dados reais.</p><div class="guide-code"><button class="ghost copy-code" type="button">Copiar</button><pre><code>$chaveSegura = Read-Host "Chave do dispositivo" -AsSecureString
+$chave = [System.Net.NetworkCredential]::new("", $chaveSegura).Password
+$corpo = Get-Content -Raw -LiteralPath .\telemetria.json
+Invoke-RestMethod -Method Post `
+  -Uri "https://mrvbot.com/smart_recycling/api/telemetry" `
+  -ContentType "application/json" `
+  -Headers @{ "X-Device-Key" = $chave } `
+  -Body $corpo
+Remove-Variable chave, chaveSegura</code></pre></div><h3>Python, inclusive no Raspberry Pi</h3><p>Use a biblioteca padrão do Python. O código solicita a chave e lê o arquivo com a medição, sem gerar valores.</p><div class="guide-code"><button class="ghost copy-code" type="button">Copiar</button><pre><code>import getpass
+import json
+import urllib.request
+import urllib.error
+from pathlib import Path
+
+key = getpass.getpass("Chave do dispositivo: ")
+payload = json.loads(Path("telemetria.json").read_text(encoding="utf-8-sig"))
+request = urllib.request.Request(
+    "https://mrvbot.com/smart_recycling/api/telemetry",
+    data=json.dumps(payload).encode("utf-8"),
+    headers={"Content-Type": "application/json", "X-Device-Key": key},
+    method="POST",
+)
+try:
+    with urllib.request.urlopen(request, timeout=15) as response:
+        print(response.status, response.read().decode())
+except urllib.error.HTTPError as error:
+    print(error.code, error.read().decode())</code></pre></div><p>Sucesso: <strong>HTTP 201</strong>, com <code>{"id":123}</code> (o número varia). O servidor registra o horário de recebimento e notifica o painel pelo WebSocket.</p></section>
+<section class="panel" id="campos"><div class="eyebrow">Passo 4</div><h2>Entenda os campos e as unidades</h2><div class="guide-table-wrap"><table class="guide-table"><thead><tr><th>Campo</th><th>Formato / unidade</th><th>Regra atual</th></tr></thead><tbody><tr><td><code>device_id</code></td><td>Texto</td><td>Obrigatório; 1 a 80 caracteres.</td></tr><tr><td><code>material</code></td><td>Texto</td><td>Obrigatório: <code>organico</code>, <code>reciclavel</code> ou <code>indefinido</code>, sem acentos.</td></tr><tr><td><code>simulated</code></td><td>Booleano</td><td>Use false. true é rejeitado na produção.</td></tr><tr><td><code>confidence</code></td><td>Número de 0 a 1 ou null</td><td>0.92 representa 92% de confiança, não acurácia validada.</td></tr><tr><td><code>metal</code></td><td>Booleano</td><td>Detecção do indutivo; padrão false se omitido. Não aceita null.</td></tr><tr><td><code>infrared</code></td><td>Número ou null</td><td>Leitura bruta; escala depende da calibração do firmware.</td></tr><tr><td><code>color_r</code>, <code>color_g</code>, <code>color_b</code></td><td>Inteiros de 0 a 255 ou null</td><td>Valores processados. Não enviar frequências brutas do TCS230 nesses campos.</td></tr><tr><td><code>distance_cm</code></td><td>Centímetros ou null</td><td>Número não negativo.</td></tr><tr><td><code>organic_fill_pct</code>, <code>recyclable_fill_pct</code></td><td>Percentual ou null</td><td>0 a 100; calcular conforme a instalação e calibração física.</td></tr><tr><td><code>organic_weight_g</code>, <code>recyclable_weight_g</code></td><td>Gramas ou null</td><td>Não negativos. Converta kg para g antes do envio.</td></tr><tr><td><code>conveyor_running</code></td><td>Booleano</td><td>Estado informado pelo controlador; padrão false. Não prova movimento físico sem realimentação.</td></tr><tr><td><code>servo_position_deg</code></td><td>Graus ou null</td><td>0 a 180; distinguir posição comandada de medição física no firmware.</td></tr></tbody></table></div><div class="guide-callout caution">O endpoint legado <code>/api/telemetry</code> não possui <code>event_id</code>, deduplicação nem timestamp de origem. O novo endpoint <code>/api/v1/events</code> oferece esses recursos. Reenviar o mesmo evento cria outro registro. Os totais contam leituras, não objetos únicos validados. Não envie telemetria periódica como se cada amostra fosse um novo resíduo.</div></section>
+<section class="panel" id="consultas"><div class="eyebrow">Passo 5</div><h2>Consulte os dados e acompanhe ao vivo</h2><p>Depois do login no terminal, reutilize <code>cookies.txt</code>. Estes exemplos só consultam os dados.</p><div class="guide-code"><button class="ghost copy-code" type="button">Copiar</button><pre><code># Resumo: total, organic, recyclable, undefined, latest, simulation_mode
+curl -b cookies.txt https://mrvbot.com/smart_recycling/api/overview
+
+# Leituras mais recentes, em ordem decrescente de ID (limite de 1 a 200)
+curl -b cookies.txt "https://mrvbot.com/smart_recycling/api/readings?limit=40"
+
+# Encerrar e revogar a sessão
+curl -X POST -b cookies.txt https://mrvbot.com/smart_recycling/api/auth/logout</code></pre></div><p>Sem hardware, o resumo contém <code>latest: null</code> e o histórico pode ser <code>[]</code>. Zero nos totais significa nenhuma leitura registrada; <code>null</code> em uma medição significa valor desconhecido. Após 60 segundos sem nova leitura, o painel considera a telemetria desatualizada.</p><h3>WebSocket no navegador</h3><p>Abra o console de desenvolvedor nesta página após fazer login e execute o trecho abaixo. O navegador envia o cookie da sessão automaticamente. A conexão só notifica novas leituras; consulte o histórico antes para carregar dados anteriores.</p><div class="guide-code"><button class="ghost copy-code" type="button">Copiar</button><pre><code>const stream = new WebSocket("wss://mrvbot.com/smart_recycling/ws");
+stream.onmessage = event =&gt; console.log(JSON.parse(event.data));
+stream.onclose = () =&gt; console.log("Conexão encerrada. Verifique a sessão.");
+const keepAlive = setInterval(() =&gt; {
+  if (stream.readyState === WebSocket.OPEN) stream.send("ping");
+}, 15000);
+// Ao terminar:
+// clearInterval(keepAlive);
+// stream.close();</code></pre></div><p>Formato de notificação: <code>{"type":"reading","data":{...}}</code>. Ao perder a conexão, reconecte com espera progressiva e refaça a consulta do histórico. O cookie do painel é necessário; a chave do dispositivo não autentica o WebSocket.</p></section>
+<section class="panel" id="esp32"><div class="eyebrow">Passo 6</div><h2>Conecte o ESP32</h2><div class="guide-callout">Para configurar o ESP32, <a href="./integracao">baixe o firmware e siga o guia de equipamentos</a>. O ESP32 usa as rotas acadêmicas por padrão e também oferece o modo v1. A sequência abaixo descreve a compatibilidade com o endpoint legado.</div><ol><li>Configure a rede Wi-Fi e mantenha o controle da esteira e os intertravamentos no Arduino, independentes da rede.</li><li>Receba pela UART as medições reais do Arduino. Defina com o firmware os pinos, baud rate, framing e unidades; esta versão ainda não fornece esse adaptador pronto.</li><li>Converta os dados para o contrato da tabela. Use JSON válido, com números e booleanos, sem unidades dentro dos valores numéricos.</li><li>Faça um POST HTTPS para <code>https://mrvbot.com/smart_recycling/api/telemetry</code>, com os dois cabeçalhos indicados no passo 3.</li><li>Configure a validação do certificado TLS com uma CA confiável e o relógio do dispositivo correto. Não use modo TLS inseguro.</li><li>Considere o envio confirmado somente após HTTP 201. Em 401, corrija a chave; em 422, corrija o JSON. Após timeout, não reenvie automaticamente como se houvesse deduplicação: o registro pode já ter sido salvo.</li><li>Abra o painel e confira a origem, a classificação, os valores e o horário. A aceitação de um JSON não substitui a validação física dos sensores.</li></ol><p>Armazene a chave na configuração privada do dispositivo. Não a inclua em páginas públicas, capturas de tela ou repositórios. O acesso remoto de iniciar ou movimentar motores continua bloqueado.</p></section>
+<section class="panel" id="erros"><div class="eyebrow">Passo 7</div><h2>Resolva os erros mais comuns</h2><div class="guide-table-wrap"><table class="guide-table"><thead><tr><th>Resposta</th><th>O que verificar</th></tr></thead><tbody><tr><td>201</td><td>Telemetria salva. Guarde o ID retornado.</td></tr><tr><td>401 no envio</td><td>Chave ausente ou incorreta no cabeçalho X-Device-Key.</td></tr><tr><td>401 nas consultas</td><td>Sessão ausente, expirada ou revogada. Faça login e use os cookies.</td></tr><tr><td>303 para /login</td><td>Página protegida acessada sem sessão. Entre pelo formulário.</td></tr><tr><td>403</td><td>Simulação desativada, origem não permitida ou comando físico bloqueado.</td></tr><tr><td>422</td><td>JSON inválido, campo obrigatório ausente ou valor fora da faixa. Leia o campo detail da resposta.</td></tr><tr><td>429 no login</td><td>Limite de tentativas atingido. Aguarde 5 minutos.</td></tr><tr><td>502 / 503 ou timeout</td><td>Verifique conexão e serviços na VPS. Não repita envios sem considerar o risco de registros duplicados.</td></tr><tr><td>Painel sem dados recentes</td><td>Confirme o envio com HTTP 201, horário e comunicação do equipamento. A conexão do site não indica conexão do dispositivo.</td></tr></tbody></table></div><p>Para consultar os esquemas e todas as rotas, abra a <a href="./docs">referência interativa da API</a>. A opção “Try it out” de rotas POST pode gravar dados reais: use apenas payloads reais ou um ambiente de testes separado.</p></section></div><footer class="foot">Smart Recycling · Tutorial da API atual · Nenhum exemplo desta página é enviado automaticamente.</footer></main></div><script src="./static/tutorial.js"></script></body></html>

@@ -1,0 +1,472 @@
+{
+  "$defs": {
+    "AIResult": {
+      "additionalProperties": false,
+      "properties": {
+        "material": {
+          "enum": [
+            "organico",
+            "reciclavel",
+            "indefinido"
+          ],
+          "title": "Material",
+          "type": "string"
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "model_version": {
+          "maxLength": 100,
+          "title": "Model Version",
+          "type": "string"
+        },
+        "inference_ms": {
+          "minimum": 0.0,
+          "title": "Inference Ms",
+          "type": "number"
+        }
+      },
+      "required": [
+        "material",
+        "model_version",
+        "inference_ms"
+      ],
+      "title": "AIResult",
+      "type": "object"
+    },
+    "HardwareData": {
+      "additionalProperties": false,
+      "properties": {
+        "device_role": {
+          "default": "esp32",
+          "enum": [
+            "arduino",
+            "esp32",
+            "raspberry_pi"
+          ],
+          "title": "Device Role",
+          "type": "string"
+        },
+        "material": {
+          "anyOf": [
+            {
+              "enum": [
+                "organico",
+                "reciclavel",
+                "indefinido"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Material"
+        },
+        "controller_object_id": {
+          "anyOf": [
+            {
+              "maxLength": 100,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Controller Object Id"
+        },
+        "object_id": {
+          "anyOf": [
+            {
+              "maxLength": 100,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Object Id"
+        },
+        "confidence": {
+          "anyOf": [
+            {
+              "maximum": 1.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Confidence"
+        },
+        "metal": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Metal"
+        },
+        "infrared": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Infrared"
+        },
+        "infrared_mode": {
+          "anyOf": [
+            {
+              "enum": [
+                "digital",
+                "analog"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Infrared Mode"
+        },
+        "color_r": {
+          "anyOf": [
+            {
+              "maximum": 255,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Color R"
+        },
+        "color_g": {
+          "anyOf": [
+            {
+              "maximum": 255,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Color G"
+        },
+        "color_b": {
+          "anyOf": [
+            {
+              "maximum": 255,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Color B"
+        },
+        "color_pulse_us": {
+          "anyOf": [
+            {
+              "items": {
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "maxItems": 3,
+              "minItems": 3,
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Color Pulse Us"
+        },
+        "color_calibrated": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Color Calibrated"
+        },
+        "distance_cm": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Distance Cm"
+        },
+        "organic_bin_distance_cm": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Organic Bin Distance Cm"
+        },
+        "recyclable_bin_distance_cm": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Recyclable Bin Distance Cm"
+        },
+        "organic_fill_pct": {
+          "anyOf": [
+            {
+              "maximum": 100.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Organic Fill Pct"
+        },
+        "recyclable_fill_pct": {
+          "anyOf": [
+            {
+              "maximum": 100.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Recyclable Fill Pct"
+        },
+        "organic_weight_g": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Organic Weight G"
+        },
+        "recyclable_weight_g": {
+          "anyOf": [
+            {
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Recyclable Weight G"
+        },
+        "conveyor_running": {
+          "anyOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Conveyor Running"
+        },
+        "servo_position_deg": {
+          "anyOf": [
+            {
+              "maximum": 180.0,
+              "minimum": 0.0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Servo Position Deg"
+        },
+        "sensor_material": {
+          "anyOf": [
+            {
+              "enum": [
+                "organico",
+                "reciclavel",
+                "indefinido"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Sensor Material"
+        },
+        "ai": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/AIResult"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "fusion": {
+          "anyOf": [
+            {
+              "enum": [
+                "ai",
+                "sensors",
+                "agreement",
+                "divergence",
+                "unavailable"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Fusion"
+        },
+        "faults": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 32,
+          "title": "Faults",
+          "type": "array"
+        }
+      },
+      "title": "HardwareData",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    },
+    "event_id": {
+      "maxLength": 120,
+      "minLength": 8,
+      "pattern": "^[A-Za-z0-9._:-]+$",
+      "title": "Event Id",
+      "type": "string"
+    },
+    "device_id": {
+      "maxLength": 80,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._:-]+$",
+      "title": "Device Id",
+      "type": "string"
+    },
+    "timestamp": {
+      "anyOf": [
+        {
+          "format": "date-time",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Timestamp"
+    },
+    "type": {
+      "enum": [
+        "telemetry",
+        "classification",
+        "heartbeat"
+      ],
+      "title": "Type",
+      "type": "string"
+    },
+    "data": {
+      "$ref": "#/$defs/HardwareData"
+    }
+  },
+  "required": [
+    "schema_version",
+    "event_id",
+    "device_id",
+    "type",
+    "data"
+  ],
+  "title": "HardwareEvent",
+  "type": "object"
+}
